@@ -10,8 +10,12 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.skbuf.iodemo.MainActivity">
 
-    <TextView
+    <Button
+        android:text="Demo #1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:id="@+id/demo1"
+        android:layout_alignParentEnd="true" />
 </RelativeLayout>
