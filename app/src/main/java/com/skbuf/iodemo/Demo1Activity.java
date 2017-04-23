@@ -1,6 +1,15 @@
 package com.skbuf.iodemo;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +27,22 @@ public class Demo1Activity extends AppCompatActivity {
     private Switch activeSwitch;
     private SeekBar precisionSeekBar;
 
+    private SensorService mSensorService;
+    private boolean mServiceBound = false;
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            SensorService.MyBinder myBinder = (SensorService.MyBinder) iBinder;
+            mSensorService = myBinder.getService();
+            mServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mServiceBound = false;
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,17 +56,28 @@ public class Demo1Activity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 Log.i(TAG, "active switch changed state to " + Boolean.toString(checked));
                 if (checked) {
-                    Log.d(TAG, "should do smth");
+                    Log.d(TAG, "started SensorService");
+                    Intent intent = new Intent(getApplicationContext(), SensorService.class);
+                    startService(intent);
+                    bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+                    mServiceBound = true;
                 } else {
-                    Log.d(TAG, "should do smth");
+                    Log.d(TAG, "stopped SensorService");
+                    if (mServiceBound) {
+                        unbindService(mServiceConnection);
+                        mServiceBound = false;
+                    }
+                    Intent intent = new Intent(getApplicationContext(), SensorService.class);
+                    stopService(intent);
                 }
             }
         });
-        
+
         precisionSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                Log.i(TAG, "precision changed to " + Integer.toString(i));
+            public void onProgressChanged(SeekBar seekBar, int precision, boolean b) {
+                Log.i(TAG, "precision changed to " + Integer.toString(precision));
+                mSensorService.setPrecision(precision);
             }
 
             @Override
@@ -56,4 +92,13 @@ public class Demo1Activity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
 }
